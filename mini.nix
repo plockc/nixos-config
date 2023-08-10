@@ -11,23 +11,12 @@
     ];
 
   # Bootloader.
-  boot.loader.grub.enable = true;
-  boot.loader.grub.device = "/dev/nvme0n1";
-  boot.loader.grub.useOSProber = true;
-
-  # Setup keyfile
-  boot.initrd.secrets = {
-    "/crypto_keyfile.bin" = null;
-  };
-
-  # Enable grub cryptodisk
-  boot.loader.grub.enableCryptodisk=true;
-
+  boot.loader.systemd-boot.enable = true;
+  boot.loader.efi.canTouchEfiVariables = true;
   # Enable nested virtualization
   boot.extraModprobeConfig = "options kvm_intel nested=1";
 
-  boot.initrd.luks.devices."luks-40422ee3-379b-4ed6-aa02-890c86b2a1d3".keyFile = "/crypto_keyfile.bin";
-  networking.hostName = "brick"; # Define your hostname.
+  networking.hostName = "mini"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
   # Configure network proxy if necessary
@@ -66,11 +55,9 @@
   services.xserver = {
     layout = "us";
     xkbVariant = "";
-    # for changes to take effect, log out after running the below commands
-    # gsettings reset org.gnome.desktop.input-sources xkb-options
-    # gsettings reset org.gnome.desktop.input-sources sources
     xkbOptions = "caps:escape_shifted_capslock";
   };
+
   # console gets mapping too
   console.useXkbConfig = true;
 
@@ -100,7 +87,7 @@
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.plockc = {
     isNormalUser = true;
-    description = "Chris Plock";
+    description = "Chris P";
     extraGroups = [ "networkmanager" "wheel" "libvirtd" ];
     packages = with pkgs; [
       firefox
@@ -115,7 +102,6 @@
   # $ nix search wget
   environment.systemPackages = with pkgs; [
   #  vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
-  #  wget
     neovim
     git
     go
@@ -133,11 +119,8 @@
     python3
     wget
     htop
+    virt-manager
   ];
-
-  services.kubernetes.roles = [ "master" "node" ];
-  services.kubernetes.masterAddress = "localhost";
-  services.kubernetes.addons.dns.enable = true;
 
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.
@@ -166,4 +149,19 @@
   # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
   system.stateVersion = "23.05"; # Did you read the comment?
 
+  virtualisation = {
+    libvirtd = {
+      enable = true;
+      onBoot = "start";
+      onShutdown = "shutdown";
+    };
+  };
+
+  #programs.dconf.enable = true;
+  #dconf.settings = {
+  #  "org/virt-manager/virt-manager/connections" = {
+  #    autoconnect = ["qemu:///system"];
+  #    uris = ["qemu:///system"];
+  #  };
+  #};
 }
