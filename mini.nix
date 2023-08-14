@@ -16,15 +16,28 @@
   # Enable nested virtualization
   boot.extraModprobeConfig = "options kvm_intel nested=1";
 
+  boot.kernel.sysctl."net.ipv4.conf.all.forwarding" = 1;
+
   networking.hostName = "mini"; # Define your hostname.
-  # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
+  # not needed with network manager enabled
+  #networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
   # Configure network proxy if necessary
   # networking.proxy.default = "http://user:password@proxy:port/";
   # networking.proxy.noProxy = "127.0.0.1,localhost,internal.domain";
 
   # Enable networking
+  networking.enableIPv6 = false;
   networking.networkmanager.enable = true;
+  networking.interfaces = {
+    enp3s0f0 = {
+      useDHCP = false;
+      ipv4.addresses = [{
+        address = "192.168.100.1";
+        prefixLength = 24;
+      }];
+    };
+  };
 
   # Set your time zone.
   time.timeZone = "America/Los_Angeles";
@@ -120,6 +133,10 @@
     wget
     htop
     virt-manager
+    ethtool
+    tcpdump
+    conntrack-tools
+    nixos-option
   ];
 
   # Some programs need SUID wrappers, can be configured further or are
@@ -136,10 +153,28 @@
   services.openssh.enable = true;
 
   # Open ports in the firewall.
-  # networking.firewall.allowedTCPPorts = [ ... ];
-  # networking.firewall.allowedUDPPorts = [ ... ];
-  # Or disable the firewall altogether.
-  # networking.firewall.enable = false;
+  # ssh dns http https alt_http alt_https
+  networking.firewall.allowedTCPPorts = [ 22 53 80 443 8080 8443 ];
+  # dns dhcp_server dhcp_client
+  networking.firewall.allowedUDPPorts = [ 53 67 68 ];
+  networking.firewall.enable = false;
+  networking.nftables = {
+    enable = true;
+    ruleset = ''
+      table ip nat {
+        chain postrouting {
+          type nat hook postrouting priority 100; policy accept;
+          oifname "wlp2s0" masquerade
+        } 
+      }
+    '';
+  };
+  networking.firewall.rejectPackets = true;
+  networking.firewall.filterForward = false;
+  networking.firewall.extraForwardRules = ''
+  '';
+  networking.firewall.extraCommands = ''
+  '';
 
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions
