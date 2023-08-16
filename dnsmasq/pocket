@@ -1,0 +1,25 @@
+# default is 150
+cache-size=1000
+# can repeat no-dhcp-interface
+no-dhcp-interface=wlp2s0
+
+# static route
+dhcp-option=121,0.0.0.0/0,192.168.24.1
+dhcp-range=192.168.25.255,192.168.31.254,30d
+log-dhcp
+# do not forward requests for non-routed IPs
+bogus-priv
+# require a domain name before forwarding requests
+domain-needed
+
+# no resolve.conf settings as we'll resolve based on
+# what DHCP has set up already
+
+# well known host entries for local domain
+addn-hosts=/etc/hosts.dnsmasq
+
+# define local domain
+local=/lan/
+domain=lan
+# host entries will get the local domain name added automatically
+expand-hosts

@@ -28,15 +28,25 @@
 
   # Enable networking
   networking.enableIPv6 = false;
-  networking.networkmanager.enable = true;
+  networking.search = ["lan"];
   networking.interfaces = {
     enp3s0f0 = {
       useDHCP = false;
       ipv4.addresses = [{
-        address = "192.168.100.1";
-        prefixLength = 24;
+        address = "192.168.24.1";
+        prefixLength = 21;
       }];
     };
+  };
+  networking.networkmanager = {
+    enable = true;
+    dns =  "none";
+  };
+
+  environment.etc = {
+    "hosts.dnsmasq".text = (builtins.readFile ./dnsmasq/hosts.dnsmasq);
+    "dnsmasq.d/pocket".text = (builtins.readFile ./dnsmasq/pocket);
+    "dnsmasq.d/static-leases".text = (builtins.readFile ./dnsmasq/static-leases);
   };
 
   # Set your time zone.
@@ -97,6 +107,9 @@
   # Enable touchpad support (enabled default in most desktopManager).
   # services.xserver.libinput.enable = true;
 
+  systemd.targets.hibernate.enable = false;
+  systemd.targets.hybrid-sleep.enable = false;
+  
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.plockc = {
     isNormalUser = true;
@@ -137,6 +150,9 @@
     tcpdump
     conntrack-tools
     nixos-option
+    dnsmasq
+    ripgrep
+    ldns
   ];
 
   # Some programs need SUID wrappers, can be configured further or are
@@ -152,12 +168,20 @@
   # Enable the OpenSSH daemon.
   services.openssh.enable = true;
 
+  services.dnsmasq = {
+    enable = true;
+    settings = {
+      conf-dir = "/etc/dnsmasq.d";
+      server = ["1.1.1.1"  "8.8.8.8"];
+    };
+  };
+
+  networking.firewall.enable = true;
   # Open ports in the firewall.
   # ssh dns http https alt_http alt_https
   networking.firewall.allowedTCPPorts = [ 22 53 80 443 8080 8443 ];
   # dns dhcp_server dhcp_client
   networking.firewall.allowedUDPPorts = [ 53 67 68 ];
-  networking.firewall.enable = false;
   networking.nftables = {
     enable = true;
     ruleset = ''
