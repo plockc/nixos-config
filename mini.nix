@@ -2,8 +2,22 @@
 # your system.  Help is available in the configuration.nix(5) man page
 # and in the NixOS manual (accessible by running ‘nixos-help’).
 
+# TODO: https://github.com/vfreex/mdns-reflector
+# TODO: https://unix.stackexchange.com/questions/272660/how-to-split-etc-nixos-configuration-nix-into-separate-modules
+# TODO: https://github.com/ryantm/agenix
+# TODO: iso/vm generation https://nixos.org/manual/nixos/stable/#sec-building-image
+# RELATED DOCS (packages, option, flakes): https://search.nixos.org/
+# RELATED DOCS https://francis.begyn.be/blog/nixos-home-router
+# RELATED DOCS https://www.jjpdev.com/posts/home-router-nixos/
+# UNRELATED DOCS https://discourse.nixos.org/t/how-to-have-a-minimal-nixos/22652
+# UNRELATED DOCS https://tailscale.com/use-cases/homelab/
+
 { config, pkgs, ... }:
 
+let
+  wanIf = "wlp2s0";
+  lanIf = "enp3s0f0";
+in
 {
   imports =
     [ # Include the results of the hardware scan.
@@ -30,7 +44,7 @@
   networking.enableIPv6 = false;
   networking.search = ["lan"];
   networking.interfaces = {
-    enp3s0f0 = {
+    "${lanIf}" = {
       useDHCP = false;
       ipv4.addresses = [{
         address = "192.168.24.1";
@@ -176,29 +190,22 @@
     };
   };
 
-  networking.firewall.enable = true;
+  networking.firewall.enable = false;
   # Open ports in the firewall.
   # ssh dns http https alt_http alt_https
-  networking.firewall.allowedTCPPorts = [ 22 53 80 443 8080 8443 ];
+  # networking.firewall.allowedTCPPorts = [ 22 53 80 443 8080 8443 ];
   # dns dhcp_server dhcp_client
-  networking.firewall.allowedUDPPorts = [ 53 67 68 ];
+  # networking.firewall.allowedUDPPorts = [ 53 67 68 ];
   networking.nftables = {
     enable = true;
-    ruleset = ''
-      table ip nat {
-        chain postrouting {
-          type nat hook postrouting priority 100; policy accept;
-          oifname "wlp2s0" masquerade
-        } 
-      }
-    '';
+    ruleset = (import ./firewall.nft) lanIf wanIf;
   };
-  networking.firewall.rejectPackets = true;
-  networking.firewall.filterForward = false;
-  networking.firewall.extraForwardRules = ''
-  '';
-  networking.firewall.extraCommands = ''
-  '';
+  #networking.firewall.rejectPackets = true;
+  #networking.firewall.filterForward = false;
+  #networking.firewall.extraForwardRules = ''
+  #'';
+  #networking.firewall.extraCommands = ''
+  #'';
 
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions

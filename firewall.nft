@@ -1,0 +1,30 @@
+# when imported, returns f(lanIfName,  wanIfName) for router with NATing firewall
+# and allows SSH, DHCP, and some ICMP from anywhere, and web from the LAN
+
+lan: wan: ''
+table inet nat {
+  chain postrouting {
+    type nat hook postrouting priority 100; policy accept;
+    oifname ${wan} masquerade
+  } 
+}
+table ip filter {
+  chain input {
+    type filter hook input priority filter; policy drop;
+    iifname "lo" accept comment "trusted interfaces"
+    ct state vmap {
+      invalid : drop, established : accept, related : accept,
+      new : jump input-allow, untracked : jump input-allow
+    }
+    tcp flags syn / fin,syn,rst,ack log prefix "refused connection: " level info
+    meta l4proto tcp reject with tcp reset
+    reject
+  }
+  chain input-allow {
+  	tcp dport { 22 } accept
+  	iifname ${lan} tcp dport { 53, 80, 443, 8080, 8443 } accept
+  	iifname ${lan}  udp dport { 53, 67, 68 } accept
+  	icmp type { echo-request, echo-reply, destination-unreachable, time-exceeded } counter accept comment "Allow select ICMP"
+  }
+}
+''
