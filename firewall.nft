@@ -2,28 +2,35 @@
 # and allows SSH, DHCP, and some ICMP from anywhere, and web from the LAN
 
 lan: wan: ''
+# forwarded packets to the wan will be NAT-ed
 table inet nat {
   chain postrouting {
     type nat hook postrouting priority 100; policy accept;
-    oifname ${wan} masquerade
+    oifname ${wan} counter masquerade
   } 
 }
+# lock down packets aimed at this host except well known services
+# dhcp, dns, http(s) via input-allow chain
 table ip filter {
   chain input {
     type filter hook input priority filter; policy drop;
-    iifname "lo" accept comment "trusted interfaces"
+    iifname "lo" counter accept comment "trusted interfaces"
     ct state vmap {
       invalid : drop, established : accept, related : accept,
       new : jump input-allow, untracked : jump input-allow
     }
     tcp flags syn / fin,syn,rst,ack log prefix "refused connection: " level info
     meta l4proto tcp reject with tcp reset
-    reject
+    counter reject
   }
   chain input-allow {
-  	tcp dport { 22 } accept
-  	iifname ${lan} tcp dport { 53, 80, 443, 8080, 8443 } accept
-  	iifname ${lan}  udp dport { 53, 67, 68 } accept
+  	tcp dport { 22 } counter accept
+        #  not explicit lan so we can handle virtbr0 for virtual machines
+	#  3389-: Remote Desktops
+  	iifname != ${wan} udp dport { 53, 3389, 3390, 3391  } counter accept
+  	iifname != ${wan} tcp dport { 53, 80, 443, 3389, 3390, 3891, 8080, 8443 } counter accept
+        #  not explicit lan so we can handle virtbr0 for virtual machines
+  	iifname != ${wan}  udp dport { 53, 67, 68 } counter accept
   	icmp type { echo-request, echo-reply, destination-unreachable, time-exceeded } counter accept comment "Allow select ICMP"
   }
 }

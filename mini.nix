@@ -2,6 +2,7 @@
 # your system.  Help is available in the configuration.nix(5) man page
 # and in the NixOS manual (accessible by running ‘nixos-help’).
 
+# TODO: wireguard
 # TODO: https://github.com/vfreex/mdns-reflector
 # TODO: https://unix.stackexchange.com/questions/272660/how-to-split-etc-nixos-configuration-nix-into-separate-modules
 # TODO: https://github.com/ryantm/agenix
@@ -92,6 +93,9 @@ in
   services.xserver = {
     layout = "us";
     xkbVariant = "";
+    # for changes to take effect, log out after running the below commands
+    # gsettings reset org.gnome.desktop.input-sources xkb-options
+    # gsettings reset org.gnome.desktop.input-sources sources
     xkbOptions = "caps:escape_shifted_capslock";
   };
 
@@ -160,6 +164,7 @@ in
     wget
     htop
     virt-manager
+    virt-viewer
     ethtool
     tcpdump
     conntrack-tools
@@ -167,6 +172,12 @@ in
     dnsmasq
     ripgrep
     ldns
+    # for apple thunderbolt display
+    plasma5Packages.plasma-thunderbolt
+    sshfs
+    file
+    zip
+    unzip
   ];
 
   # Some programs need SUID wrappers, can be configured further or are
@@ -180,16 +191,27 @@ in
   # List services that you want to enable:
 
   # Enable the OpenSSH daemon.
-  services.openssh.enable = true;
+  services.openssh = {
+    enable = true;
+    settings = {
+      X11DisplayOffset = 10;
+    };
+    settings.X11Forwarding = true;
+  };
 
   services.dnsmasq = {
     enable = true;
     settings = {
       conf-dir = "/etc/dnsmasq.d";
       server = ["1.1.1.1"  "8.8.8.8"];
+      bind-interfaces = true;
+      interface = ["lo" lanIf];
     };
   };
 
+  # for apple thunderbolt display
+  services.hardware.bolt.enable = true;
+  
   networking.firewall.enable = false;
   # Open ports in the firewall.
   # ssh dns http https alt_http alt_https
