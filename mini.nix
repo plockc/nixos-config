@@ -137,6 +137,10 @@ in
       firefox
     #  thunderbird
     ];
+    # writes to /etc/ssh/authorized_keys.d/<user>
+    openssh.authorizedKeys.keyFiles = 
+      if builtins.pathExists "/etc/nixos/authorized_keys" then ["/etc/nixos/authorized_keys"]
+      else [];
   };
 
   # Allow unfree packages
@@ -236,6 +240,12 @@ in
   # Before changing this value read the documentation for this option
   # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
   system.stateVersion = "23.05"; # Did you read the comment?
+  system.autoUpgrade = {
+    enable = true;
+    dates = "Sat *-*-* 04:00:00";
+    # reboot into the new generation
+    allowReboot = true;
+  };
 
   virtualisation = {
     libvirtd = {

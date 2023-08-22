@@ -26,9 +26,9 @@ table ip filter {
   chain input-allow {
   	tcp dport { 22 } counter accept
         #  not explicit lan so we can handle virtbr0 for virtual machines
-	#  3389-: Remote Desktops
-  	iifname != ${wan} udp dport { 53, 3389, 3390, 3391  } counter accept
-  	iifname != ${wan} tcp dport { 53, 80, 443, 3389, 3390, 3891, 8080, 8443 } counter accept
+	#  3389: Remote Desktops (RDP)
+        #  53: DNS (tcp or udp)
+  	iifname != ${wan} tcp dport { 53, 80, 443, 8080, 8443 } counter accept
         #  not explicit lan so we can handle virtbr0 for virtual machines
   	iifname != ${wan}  udp dport { 53, 67, 68 } counter accept
   	icmp type { echo-request, echo-reply, destination-unreachable, time-exceeded } counter accept comment "Allow select ICMP"
