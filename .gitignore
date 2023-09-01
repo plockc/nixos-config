@@ -1,3 +1,7 @@
 hardware-configuration.nix
 configuration.nix
 result
+dnsmasq/hosts.dnsmasq
+dnsmasq/static-leases
+wg0.peers.nix
+wg0.private.key
