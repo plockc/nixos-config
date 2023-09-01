@@ -57,6 +57,18 @@ in
     enable = true;
     dns =  "none";
   };
+  networking.wireguard.interfaces =
+    if builtins.pathExists "/etc/nixos/wg0.private.key" then
+      {
+        wg0 = {
+          ips = ["192.168.4.1/24"];
+          listenPort = 51820;
+          privateKeyFile = "/etc/nixos/wg0.private.key";          
+          peers = (builtins.import ./wg0.peers.nix);
+        };
+      }
+    else [];
+ 
 
   environment.etc = {
     "hosts.dnsmasq".text = (builtins.readFile ./dnsmasq/hosts.dnsmasq);
@@ -182,6 +194,7 @@ in
     file
     zip
     unzip
+    wireguard-tools
   ];
 
   # Some programs need SUID wrappers, can be configured further or are

@@ -31,6 +31,8 @@ table ip filter {
   	iifname != ${wan} tcp dport { 53, 80, 443, 8080, 8443 } counter accept
         #  not explicit lan so we can handle virtbr0 for virtual machines
   	iifname != ${wan}  udp dport { 53, 67, 68 } counter accept
+	# allow wireguard
+  	iifname == ${wan} udp dport { 51820 } counter accept
   	icmp type { echo-request, echo-reply, destination-unreachable, time-exceeded } counter accept comment "Allow select ICMP"
   }
 }
