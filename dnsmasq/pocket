@@ -1,11 +1,11 @@
 # default is 150
 cache-size=1000
 # can repeat no-dhcp-interface
-no-dhcp-interface=wlp2s0
+no-dhcp-interface=ens9
 
 # static route
-dhcp-option=121,0.0.0.0/0,192.168.24.1
-dhcp-range=192.168.25.255,192.168.31.254,30d
+#dhcp-option=121,0.0.0.0/0,192.168.24.1
+dhcp-range=192.168.9.255,192.168.15.254,30d
 log-dhcp
 # do not forward requests for non-routed IPs
 bogus-priv

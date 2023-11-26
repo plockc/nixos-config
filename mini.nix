@@ -16,7 +16,8 @@
 { config, pkgs, ... }:
 
 let
-  wanIf = "wlp2s0";
+  #wanIf = "wlp2s0";
+  wanIf = "ens9";
   lanIf = "enp3s0f0";
 in
 {
@@ -48,7 +49,7 @@ in
     "${lanIf}" = {
       useDHCP = false;
       ipv4.addresses = [{
-        address = "192.168.24.1";
+        address = "192.168.8.1";
         prefixLength = 21;
       }];
     };
@@ -56,6 +57,8 @@ in
   networking.networkmanager = {
     enable = true;
     dns =  "none";
+    # disable wifi
+    unmanaged = ["type:wifi"];
   };
   networking.wireguard.interfaces =
     if builtins.pathExists "/etc/nixos/wg0.private.key" then
