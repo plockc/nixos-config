@@ -4,7 +4,19 @@
 
 { config, pkgs, ... }:
 
-{
+let
+  # allows for installing packages from the unstable channel (which is more up to date)
+  # without having to move the entire system to unstable
+  # e.g. to use unstable foo package, use unstable.foo in environment.systemPackages
+  unstable = import <nixos-unstable> {
+    config = {
+      allowUnfree = true;
+      # allow specific version of electron to be loaded from unstable
+      # this supports obsidian
+      permittedInsecurePackages = [ "electron-25.9.0" ];
+    };
+  };
+in {
   imports =
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
@@ -118,10 +130,34 @@
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
 
+  nixpkgs.overlays = [
+    # final and prev are arguments, the prev is the un-modified packages, final is the modified packages
+    # it is possible to reference final in the expressions
+    # commented out as this doesn't actually appear to run properly (obsidian 1.5.3 or the OS is not compatible with 26) 2024-01-06
+    # (final: prev: {
+    #   # override key/values in obsidian, this is found in pkgs/top-level/all-packages.nix
+    #   obsidian = prev.obsidian.override {
+    #     # update electron to 26 from 25 as 25 is EOL
+    #     electron = prev.electron_26;
+    #   };
+    # })
+
+    # NOTE: this does not quite work, but I think it's close
+    # Use a remote branch's package instead of directly updating, and allowUnfree for the specific package
+    # (self: super: {
+    #   obsidian = (import (builtins.fetchTarball {
+    #     url =
+    #       "https://github.com/plockc/nixpkgs/archive/4f7a8b4b37de6c7a2c3c689ff7202069fc5832d1.tar.gz";
+    #     # I trust my own repo, so not updating the verification SHA
+    #     # sha256 = "sha for remote tarball";
+    #   }) { config = { allowUnfree = true; }; }).obsidian;
+    # })
+  ];
+
   # List packages installed in system profile. To search, run:
   # $ nix search wget
-  environment.systemPackages = with pkgs; [
   #  vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
+  environment.systemPackages = with pkgs; [
   #  wget
     neovim
     git
@@ -146,9 +182,11 @@
     conntrack-tools
     nixos-option
     usbutils # provides lsusb
-    SDL2 # for sunvox synthesizer
+    # SDL2 # for sunvox synthesizer
     exfat # for reading modern windows filesystems
     zig # systems programming language
+    # see overlay above for electron
+    unstable.obsidian # note taking
   ];
 
   services.kubernetes.roles = [ "master" "node" ];
