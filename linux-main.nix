@@ -15,6 +15,10 @@
   boot.loader.grub.device = "/dev/nvme0n1";
   boot.loader.grub.useOSProber = true;
 
+  boot.kernel.sysctl = {
+    "net.ipv4.conf.all.forwarding" = 1;
+  };
+
   # Setup keyfile
   boot.initrd.secrets = {
     "/crypto_keyfile.bin" = null;
@@ -26,8 +30,11 @@
   # Enable nested virtualization
   boot.extraModprobeConfig = "options kvm_intel nested=1";
 
-  boot.initrd.luks.devices."luks-40422ee3-379b-4ed6-aa02-890c86b2a1d3".keyFile = "/crypto_keyfile.bin";
-  networking.hostName = "brick"; # Define your hostname.
+  boot.initrd.luks.devices = {
+    "luks-40422ee3-379b-4ed6-aa02-890c86b2a1d3".keyFile = "/crypto_keyfile.bin";
+  };
+  networking.hostName = "nixos"; # Define your hostname.
+
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
   # Configure network proxy if necessary
@@ -133,6 +140,15 @@
     python3
     wget
     htop
+    virt-manager
+    ethtool
+    tcpdump
+    conntrack-tools
+    nixos-option
+    usbutils # provides lsusb
+    SDL2 # for sunvox synthesizer
+    exfat # for reading modern windows filesystems
+    zig # systems programming language
   ];
 
   services.kubernetes.roles = [ "master" "node" ];
