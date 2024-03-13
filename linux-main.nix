@@ -158,7 +158,6 @@ in {
   # $ nix search wget
   #  vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
   environment.systemPackages = with pkgs; [
-  #  wget
     neovim
     git
     go
@@ -188,11 +187,35 @@ in {
     # see overlay above for electron
     unstable.obsidian # note taking
     dropbox-cli
+    unzip
+    file
+
+    # build essential
+    gcc
+    autoconf
+    automake
+    libtool
+    flex
+    bison
+    libiconv
+    gnumake
+    # more build (for openocd)
+    libusb
+    texinfo
+    pkg-config
   ];
 
   services.kubernetes.roles = [ "master" "node" ];
   services.kubernetes.masterAddress = "localhost";
   services.kubernetes.addons.dns.enable = true;
+
+  programs.virt-manager.enable=true;
+  virtualisation.libvirtd = {
+      enable = true;
+      onBoot = "start";
+      onShutdown = "shutdown";
+  };
+  virtualisation.spiceUSBRedirection.enable = true;
 
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.
