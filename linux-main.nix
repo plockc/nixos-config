@@ -25,6 +25,9 @@ in {
   imports =
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
+      ./pkgs-base.nix
+      ./pkgs-dev.nix
+      ./pkgs-dev-c.nix
     ];
 
   # Bootloader.
@@ -177,55 +180,20 @@ in {
   # $ nix search wget
   #  vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
   environment.systemPackages = with pkgs; [
-    neovim
-    git
-    go
-    pciutils
-    lshw
-    dmidecode
-    nix-index
-    sysstat
     gnome.gnome-tweaks    
     gnomeExtensions.dash-to-dock
     kubectl
     kubectx
-    yq
-    jq
-    python3
-    wget
-    htop
     virt-manager
-    ethtool
-    tcpdump
-    conntrack-tools
-    nixos-option
-    usbutils # provides lsusb
     # SDL2 # for sunvox synthesizer
-    exfat # for reading modern windows filesystems
-    zig # systems programming language
     # see overlay above for electron
     unstable.obsidian # note taking
     dropbox-cli
-    unzip
-    file
-    ripgrep
-    vscode
+
+    # more build (for openocd)
     openocd # for programming microcontrollers
     oldArmEmbeddedPkgs.gcc-arm-embedded
-
-    # build essential
-    gcc
-    autoconf
-    automake
-    libtool
-    flex
-    bison
-    libiconv
-    gnumake
-    # more build (for openocd)
     libusb
-    texinfo
-    pkg-config
 
     # nvidia attempt 8-17-24
     # nvidia-x11
