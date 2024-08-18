@@ -16,6 +16,11 @@ let
       permittedInsecurePackages = [ "electron-25.9.0" ];
     };
   };
+
+  oldArmEmbeddedPkgs = import (builtins.fetchTarball {
+    url = "https://github.com/NixOS/nixpkgs/archive/05ae01fcea6c7d270cc15374b0a806b09f548a9a.tar.gz";
+  }) {};
+ 
 in {
   imports =
     [ # Include the results of the hardware scan.
@@ -78,23 +83,37 @@ in {
   services.xserver.enable = true;
 
   # Enable the GNOME Desktop Environment.
-  services.xserver.displayManager.gdm.enable = true;
+  # I think the display manager manages X and does the auto login
+  # services.xserver.displayManager.gdm.enable = true;
   services.xserver.desktopManager.gnome.enable = true;
 
   # Configure keymap in X11
   services.xserver = {
-    layout = "us";
-    xkbVariant = "";
+    xkb.layout = "us";
+    xkb.variant = "";
     # for changes to take effect, log out after running the below commands
     # gsettings reset org.gnome.desktop.input-sources xkb-options
     # gsettings reset org.gnome.desktop.input-sources sources
-    xkbOptions = "caps:escape_shifted_capslock";
+    xkb.options = "caps:escape_shifted_capslock";
   };
   # console gets mapping too
   console.useXkbConfig = true;
 
   # Enable CUPS to print documents.
   services.printing.enable = true;
+
+  # nvidia card
+  hardware.opengl.enable = true;
+  services.xserver.videoDrivers = ["nvidia"];
+  hardware.nvidia = {
+    modesetting.enable = false;
+    powerManagement.enable = false;
+    powerManagement.finegrained = false;
+    open = false;
+    nvidiaSettings = true;
+    package = config.boot.kernelPackages.nvidiaPackages.stable;
+  };
+
 
   # Enable sound with pipewire.
   sound.enable = true;
@@ -189,6 +208,10 @@ in {
     dropbox-cli
     unzip
     file
+    ripgrep
+    vscode
+    openocd # for programming microcontrollers
+    oldArmEmbeddedPkgs.gcc-arm-embedded
 
     # build essential
     gcc
@@ -203,11 +226,22 @@ in {
     libusb
     texinfo
     pkg-config
+
+    # nvidia attempt 8-17-24
+    # nvidia-x11
+    # nvidia-settings
+    # nvidia-persistenced
+
   ];
 
   services.kubernetes.roles = [ "master" "node" ];
   services.kubernetes.masterAddress = "localhost";
   services.kubernetes.addons.dns.enable = true;
+
+  # add user access to stlink v3 for programming stm32 microcontrollers
+  services.udev.extraRules = ''
+  ATTRS{idVendor}=="0483", ATTRS{idProduct}=="3754", MODE="660", TAG+="uaccess"
+  '';
 
   programs.virt-manager.enable=true;
   virtualisation.libvirtd = {
