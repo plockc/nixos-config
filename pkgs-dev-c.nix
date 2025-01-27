@@ -10,7 +10,7 @@
     bison
     libiconv
     gnumake
-    texinfo
+    # texinfo # maybe has conflicts
     pkg-config
   ];
 }

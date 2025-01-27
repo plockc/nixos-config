@@ -17,6 +17,7 @@ let
     };
   };
 
+  # libDaisy still wants 10.2 - https://github.com/electro-smith/DaisyWiki/wiki/1d.-Installing-the-Toolchain-on-Linux
   oldArmEmbeddedPkgs = import (builtins.fetchTarball {
     url = "https://github.com/NixOS/nixpkgs/archive/05ae01fcea6c7d270cc15374b0a806b09f548a9a.tar.gz";
   }) {};
@@ -90,6 +91,22 @@ in {
   # services.xserver.displayManager.gdm.enable = true;
   services.xserver.desktopManager.gnome.enable = true;
 
+  # attempting to keep machine up (don't auto-suspend)
+  # can read with `dconf read /<path>`, there also are list/dump commands
+  programs.dconf = {
+    enable = true;
+    profiles.user.databases = [
+      {
+        lockAll = true; # prevents overriding
+        settings = {
+          "org/gnome/settings-daemon/plugins/power" = {
+	    sleep-inactive-ac-type = "nothing";
+          };
+        };
+      }
+    ];
+  };
+
   # Configure keymap in X11
   services.xserver = {
     xkb.layout = "us";
@@ -119,7 +136,8 @@ in {
 
 
   # Enable sound with pipewire.
-  sound.enable = true;
+  # 24.11 drops sound.enable, sound works without
+  #sound.enable = true;
   hardware.pulseaudio.enable = false;
   security.rtkit.enable = true;
   services.pipewire = {
@@ -148,6 +166,8 @@ in {
     #  thunderbird
     ];
   };
+
+  users.groups.plugdev = {};
 
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
@@ -188,12 +208,20 @@ in {
     # SDL2 # for sunvox synthesizer
     # see overlay above for electron
     unstable.obsidian # note taking
-    dropbox-cli
+    # needed for 24.11
+    dropbox
+    # not needed for 24.11
+    #dropbox-cli
 
     # more build (for openocd)
-    openocd # for programming microcontrollers
+    # for programming microcontrollers, see services.udev.packages, and 
+    # see services.udev.packages and users.group.plugdev needs creating
+    openocd
+    # installs arm-none-eabi-*
+    # gcc-arm-embedded-10 #  will not work with libDaisy
     oldArmEmbeddedPkgs.gcc-arm-embedded
-    libusb
+
+    # libusb - 24.11, renamed to libusb1 and included in openocd
 
     # nvidia attempt 8-17-24
     # nvidia-x11
@@ -202,14 +230,18 @@ in {
 
   ];
 
-  services.kubernetes.roles = [ "master" "node" ];
-  services.kubernetes.masterAddress = "localhost";
-  services.kubernetes.addons.dns.enable = true;
+  # disable during upgrade to 24.11
+  #
+  # services.kubernetes.roles = [ "master" "node" ];
+  # services.kubernetes.masterAddress = "localhost";
+  # services.kubernetes.easyCerts = true;
+  # services.kubernetes.addons.dns.enable = true;
+  # services.etcd.enable = true;
 
-  # add user access to stlink v3 for programming stm32 microcontrollers
-  services.udev.extraRules = ''
-  ATTRS{idVendor}=="0483", ATTRS{idProduct}=="3754", MODE="660", TAG+="uaccess"
-  '';
+  # the openocd package writes rules to expected location, this directive will pull them in
+  services.udev.packages = with pkgs; [
+    openocd
+  ];
 
   programs.virt-manager.enable=true;
   virtualisation.libvirtd = {
@@ -253,21 +285,23 @@ in {
   # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
   system.stateVersion = "23.05"; # Did you read the comment?
 
-  systemd.user.services.dropbox = {
-    description = "Dropbox";
-    wantedBy = [ "graphical-session.target" ];
-    environment = {
-      QT_PLUGIN_PATH = "/run/current-system/sw/" + pkgs.qt5.qtbase.qtPluginPrefix;
-      QML2_IMPORT_PATH = "/run/current-system/sw/" + pkgs.qt5.qtbase.qtQmlPrefix;
-    };
-    serviceConfig = {
-      ExecStart = "${pkgs.dropbox.out}/bin/dropbox";
-      ExecReload = "${pkgs.coreutils.out}/bin/kill -HUP $MAINPID";
-      KillMode = "control-group"; # upstream recommends process
-      Restart = "on-failure";
-      PrivateTmp = true;
-      ProtectSystem = "full";
-      Nice = 10;
-    };
-  };
+# drop this for 24.11
+#
+#  systemd.user.services.dropbox = {
+#    description = "Dropbox";
+#    wantedBy = [ "graphical-session.target" ];
+#    environment = {
+#      QT_PLUGIN_PATH = "/run/current-system/sw/" + pkgs.qt5.qtbase.qtPluginPrefix;
+#      QML2_IMPORT_PATH = "/run/current-system/sw/" + pkgs.qt5.qtbase.qtQmlPrefix;
+#    };
+#    serviceConfig = {
+#      ExecStart = "${pkgs.dropbox.out}/bin/dropbox";
+#      ExecReload = "${pkgs.coreutils.out}/bin/kill -HUP $MAINPID";
+#      KillMode = "control-group"; # upstream recommends process
+#      Restart = "on-failure";
+#      PrivateTmp = true;
+#      ProtectSystem = "full";
+#      Nice = 10;
+#    };
+#  };
 }
