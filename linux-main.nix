@@ -133,6 +133,8 @@ in {
     nvidiaSettings = true;
     package = config.boot.kernelPackages.nvidiaPackages.stable;
   };
+  # NVIDIA
+  hardware.nvidia-container-toolkit.enable = true;
 
 
   # Enable sound with pipewire.
@@ -223,11 +225,8 @@ in {
 
     # libusb - 24.11, renamed to libusb1 and included in openocd
 
-    # nvidia attempt 8-17-24
-    # nvidia-x11
-    # nvidia-settings
-    # nvidia-persistenced
-
+    nvidia-container-toolkit
+    podman
   ];
 
   # disable during upgrade to 24.11
@@ -250,6 +249,7 @@ in {
       onShutdown = "shutdown";
   };
   virtualisation.spiceUSBRedirection.enable = true;
+  # support for CDI for podman to work with nvidia
 
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.
